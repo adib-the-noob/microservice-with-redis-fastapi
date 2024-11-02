@@ -10,6 +10,7 @@ router = APIRouter(
     tags=["product"],
 )    
 
+
 @router.get("/all-products")
 async def get_products():
     products = ProductModel.all_pks()
@@ -17,6 +18,7 @@ async def get_products():
     # load all datas 
     datas = [ProductModel.get(product) for product in products]
     return datas
+
 
 @router.post("/add-product", response_model=None)
 async def create_product(product: Product):
@@ -28,10 +30,12 @@ async def create_product(product: Product):
     product.save()
     return product
 
+
 @router.get("/get-product/{product_id}")
 async def get_product(product_id: str):
     product = ProductModel.get(product_id)
     return product
+
 
 @router.patch("/update-product/{product_id}", response_model=None)
 async def update_product(product_id: str, updated_data: Product = Depends()):
