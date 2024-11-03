@@ -9,10 +9,10 @@ class OrderStatus(PyEnum):
 
 class Order(BaseModel):
     product_id: str
-    price: int
-    fee: int 
-    total: int
-    # status: OrderStatus = OrderStatus.pending
+    price: float
+    fee: float
+    total: float
+    status: OrderStatus = OrderStatus.pending
     
     class Config:
         from_attributes = True
