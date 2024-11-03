@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, BackgroundTasks
 from fastapi.responses import JSONResponse
 
+from typing import List
+
 from redis_models.orders import OrderModel
-from schemas.orders import Order, OrderStatus
+from schemas.orders import Order, OrderStatus, CreateOrder
 import requests
 
 from starlette.requests import Request
@@ -14,32 +16,23 @@ router = APIRouter(
     tags=["order"],
 )
 
-@router.get("/all-orders")
-async def get_all_orders():
-    pass
-
 @router.post("/add-order", response_model=None)
-async def create_order(request: Request):
+async def create_order(order_info: CreateOrder, background_tasks: BackgroundTasks):
     try:    
-        body = await request.json() # get the id and quantity of the product 
-        
         try:
-            product_id = body[0]['product_id']
-            print(product_id)
-            
+            product_id = order_info.product_id
             req = requests.get("http://127.0.0.1:8000/product/get-product/%s" % product_id)
         except requests.exceptions.RequestException as e:
             raise HTTPException(status_code=404, detail=str(e))
         
         product = req.json()
 
-        price = product['price']
-        quantity = product['quantity']
-        name = product['name']
+        price = product.get('price')
+        quantity = product.get('quantity')
+        name = product.get('name')
         
         fee = float(price) * 0.2
         total = float(price) + fee * int(quantity)
-
 
         order = OrderModel(
             product_id=product_id,
@@ -50,7 +43,9 @@ async def create_order(request: Request):
         )
         order.save()
         
-        change_order_status(order=order, status=OrderStatus.completed)
+        background_tasks.add_task(
+            change_order_status, order, OrderStatus.completed
+        )
         
         return JSONResponse({
             "status": "success",
@@ -69,7 +64,21 @@ async def create_order(request: Request):
     
     
 def change_order_status(order: OrderModel, status: OrderStatus):
-    time.sleep(5)
+    time.sleep(10)
     order.status = status
     order.save()
     return order
+
+
+@router.get(
+    path="/all-orders",
+    response_model=None
+)
+async def get_all_orders():
+    orders = OrderModel.all_pks()
+    all_orders = []
+    for order in orders:
+        order = OrderModel.get(order)
+        all_orders.append(order)
+    return all_orders
+    

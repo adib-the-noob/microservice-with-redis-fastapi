@@ -16,3 +16,8 @@ class Order(BaseModel):
     
     class Config:
         from_attributes = True
+        
+    
+class CreateOrder(BaseModel):
+    product_id: str
+    amount: int
