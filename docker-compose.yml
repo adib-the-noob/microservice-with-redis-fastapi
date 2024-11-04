@@ -1,0 +1,15 @@
+services:
+  redis-server-product:
+    image: redis:latest
+    container_name: redis-server-product
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+
+
+  redis-server-order:
+    image: redis:latest
+    container_name: redis-server-order
+    ports:
+      - "6380:6379"
+    command: redis-server --appendonly yes

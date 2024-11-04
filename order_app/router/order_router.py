@@ -5,9 +5,9 @@ from typing import List
 
 from redis_models.orders import OrderModel
 from schemas.orders import Order, OrderStatus, CreateOrder
-import requests
+from redis_client_2 import redis_client_2
 
-from starlette.requests import Request
+import requests
 import time
 
 
@@ -67,8 +67,15 @@ def change_order_status(order: OrderModel, status: OrderStatus):
     time.sleep(10)
     order.status = status
     order.save()
-    return order
-
+    redis_client_2.xadd(
+        name="order_completed",
+        fields={
+            "order_id": order.pk,
+            "product_id": order.product_id,
+            "status": order.status.value
+        },
+        id="*"
+    )
 
 @router.get(
     path="/all-orders",
